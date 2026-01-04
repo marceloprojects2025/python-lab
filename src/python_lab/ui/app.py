@@ -3,7 +3,7 @@ import asyncio
 
 
 async def main(page: ft.Page) -> None:
-    page.title = "Carrusel con fade (compatible)"
+    page.title = "Carrusel con fade e indicadores"
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
 
@@ -15,6 +15,7 @@ async def main(page: ft.Page) -> None:
 
     index = 0
 
+    # Imagen
     image = ft.Image(
         src=images[index],
         fit=ft.BoxFit.COVER,
@@ -23,23 +24,45 @@ async def main(page: ft.Page) -> None:
         border_radius=12,
     )
 
+    # Contenedor con animación fade
     container = ft.Container(
         content=image,
         opacity=1.0,
-        animate_opacity=300,  # 👈 animación real
+        animate_opacity=300,
     )
+
+    # Indicadores
+    dots = ft.Row(alignment=ft.MainAxisAlignment.CENTER)
+
+    def build_dots():
+        dots.controls.clear()
+        for i in range(len(images)):
+            dots.controls.append(
+                ft.Container(
+                    width=10,
+                    height=10,
+                    border_radius=10,
+                    bgcolor=ft.Colors.BLUE if i == index else ft.Colors.GREY_400,
+                )
+            )
+
+    build_dots()
 
     async def fade_to(new_index: int):
         nonlocal index
 
+        # Fade out
         container.opacity = 0.0
         page.update()
         await asyncio.sleep(0.3)
 
+        # Cambiar imagen
         index = new_index
         image.src = images[index]
 
+        # Fade in
         container.opacity = 1.0
+        build_dots()
         page.update()
 
     async def autoplay():
@@ -49,10 +72,16 @@ async def main(page: ft.Page) -> None:
 
     asyncio.create_task(autoplay())
 
+    # Layout final (TODO centrado con Row/Column)
     page.add(
         ft.Column(
             controls=[
-                container,
+                # Imagen centrada
+                ft.Row(
+                    controls=[container],
+                    alignment=ft.MainAxisAlignment.CENTER,
+                ),
+                # Flechas
                 ft.Row(
                     controls=[
                         ft.IconButton(
@@ -70,8 +99,11 @@ async def main(page: ft.Page) -> None:
                     ],
                     alignment=ft.MainAxisAlignment.CENTER,
                 ),
+                # Indicadores
+                dots,
             ],
             alignment=ft.MainAxisAlignment.CENTER,
+            spacing=10,
         )
     )
 
